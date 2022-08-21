@@ -1,0 +1,43 @@
+import logging
+
+from aiogram import Bot, Dispatcher, executor, types
+
+import config as cfg
+import markups as nav
+from db import Database
+
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(token=cfg.TOKEN)
+dp = Dispatcher(bot)
+db = Database('database.db')
+
+
+def check_sub_channel(chat_member):
+    return chat_member['status'] != "left"
+
+
+@dp.message_handler(content_types=["new_chat_members"])
+async def user_joined(message: types.Message):
+    await message.answer(f"{message.from_user.first_name},приветствую тебя!\nЧтобы иметь возможность писать в чат,\
+    необходимо подписаться на канал @moy_chanal.", reply_markup=nav.channelMenu)
+    if not db.user_exists(message.from_user.id):
+        db.add_user(message.from_user.id)
+    mute_min = 3600
+    return db.add_mute(message.from_user.id, mute_min)
+
+
+@dp.message_handler()
+async def mess_handler(message: types.Message):
+    if not db.mute(message.from_user.id):
+        return
+
+    else:
+        if check_sub_channel(await bot.get_chat_member(chat_id=cfg.CHANNEL_ID, user_id=message.from_user.id)):
+            db.mute_del(message.from_user.id, 0)
+        else:
+            await message.delete()
+
+
+if __name__ == "__main__":
+    executor.start_polling(dp, skip_updates=True)
