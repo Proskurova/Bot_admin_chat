@@ -86,12 +86,12 @@ async def block(message: types.Message):
 
 @dp.message_handler(content_types=["new_chat_members"])
 async def user_joined(message):
-    message_id = await message.answer(f"{message.from_user.first_name},приветствую тебя!\nЧтобы иметь возможность писать в чат,\
+    message_id = await message.answer(f"{message.new_chat_members[0].first_name}, приветствую тебя!\nЧтобы иметь возможность писать в чат,\
     необходимо подписаться на канал {db.receive_channel_url(message.chat.id)}")
-    if not db.user_exists(message.from_user.id):
-        db.add_user(message.from_user.id, message.from_user.username)
+    if not db.user_exists(message.new_chat_members[0].id):
+        db.add_user(message.new_chat_members[0].id, message.new_chat_members[0].username)
     mute_min = 3600
-    db.add_mute(message.from_user.id, mute_min)
+    db.add_mute(message.new_chat_members[0].id, mute_min)
     asyncio.create_task(delete_message(message_id, 60))
 
 
