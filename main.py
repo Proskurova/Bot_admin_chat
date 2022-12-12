@@ -103,13 +103,17 @@ async def mess_handler(message: types.Message):
 @dp.chat_member_handler()
 async def new_members_handler(chat_member: types.ChatMemberUpdated):
     if chat_member.old_chat_member.status == "left" and chat_member.new_chat_member.status == "member":
-        message_id = await bot.send_message(chat_member.chat.id, f"{chat_member.new_chat_member.user.first_name}, приветствую тебя!\nЧтобы иметь возможность писать в чат,\
-        необходимо подписаться на канал {db.receive_channel_url(chat_member.chat.id)}")
-        asyncio.create_task(delete_message(message_id, 60))
-        if not db.user_exists(chat_member.new_chat_member.user.id):
-            db.add_user(chat_member.new_chat_member.user.id, chat_member.new_chat_member.user.username)
-        mute_min = 3600
-        db.add_mute(chat_member.new_chat_member.user.id, mute_min)
+        if chat_member.chat.type == "supergroup" or chat_member.chat.type == "group":
+            mention = f'<a href="tg://user?id={chat_member.new_chat_member.user.id}">{chat_member.new_chat_member.user.first_name}</a>'
+            message_id = await bot.send_message(chat_member.chat.id, f"☀️ Привет {mention}, \n\n\
+✅Добро пожаловать в наш дружный чат👋🏻\n\nМы рады приветствовать тебя дорогой друг🙏🏻\n\nДля беспрепятственного общения\
+в чате, подпишись пожалуйста на наш канал {db.receive_channel_url(chat_member.chat.id)}\n\nТак же просим соблюдать \
+тематику данной группы и не нарушать простых правил дружественного общения🙏🏻✨ ", parse_mode="HTML")
+            asyncio.create_task(delete_message(message_id, 90))
+            if not db.user_exists(chat_member.new_chat_member.user.id):
+                db.add_user(chat_member.new_chat_member.user.id, chat_member.new_chat_member.user.username)
+            mute_min = 3600
+            db.add_mute(chat_member.new_chat_member.user.id, mute_min)
 
 
 if __name__ == "__main__":
